@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  CRYPTO
+  SN_BALANCE
+  GBP_WALLET
+}
+
+enum PaymentStatus {
+  PAID
+  FAILED
+}
+
+model User {
+  id        String    @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String    @unique
+  password  String
+  Booking   Booking[]
+  Payment   Payment[]
+  Review    Review[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([firstName])
+  @@index([lastName])
+}
+
+model Booking {
+  id         String        @id @default(uuid())
+  userId     String
+  merchantId String
+  service    String
+  amount     Float
+  status     BookingStatus
+  user       User          @relation(fields: [userId], references: [id])
+  payment    Payment?
+  Review     Review[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([userId, status])
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  bookingId String        @unique
+  userId    String
+  method    PaymentMethod
+  status    PaymentStatus
+  amount    Float
+  user      User          @relation(fields: [userId], references: [id])
+  booking   Booking       @relation(fields: [bookingId], references: [id])
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId, method])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  userId     String
+  merchantId String
+  bookingId  String
+  rating     Int
+  comment    String
+  user       User     @relation(fields: [userId], references: [id])
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId, merchantId])
+}
