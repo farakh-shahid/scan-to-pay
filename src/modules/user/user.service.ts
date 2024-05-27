@@ -14,6 +14,7 @@ import {
   HTTP_METHOD,
   saltOrRounds,
 } from '../../utils/constants/string.constant';
+import { excludeField } from 'src/utils/functions';
 
 @Injectable()
 export class UserService {
@@ -32,15 +33,20 @@ export class UserService {
   }
 
   async findAll(): Promise<User[]> {
-    return await this.prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       orderBy: {
         createdAt: DESCENDING_ORDER,
       },
     });
+    return users.map((user) => excludeField(user, 'password')) as User[];
   }
 
   async findOneById(id: string): Promise<User> {
-    return await this.findUniqueUser({ where: { id } });
+    const user = await this.findUniqueUser({ where: { id } });
+    if (user) {
+      return excludeField(user, 'password') as User;
+    }
+    return user;
   }
 
   async updateById(id: string, updateUserDto: UpdateUserDto): Promise<User> {
